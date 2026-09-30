@@ -1,0 +1,198 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!--
+    Look inspirado en el firmware real del iPod Classic (el equipo que esta
+    app sincroniza): fondo claro, filas de lista con separadores finos, y el
+    característico resaltado azul con brillo tipo vidrio para lo que importa
+    (el botón principal). No es un ControlTemplate custom por control: son
+    clases sobre los controles de FluentTheme, que sigue puesta como base.
+    Menos riesgo de romper algo al tocar una versión nueva de Avalonia.
+  -->
+
+  <Styles.Resources>
+    <Color x:Key="IpodBg">#F0F0F3</Color>
+    <Color x:Key="IpodRowBg">#FFFFFF</Color>
+    <Color x:Key="IpodBorder">#DCDCE1</Color>
+    <Color x:Key="IpodText">#1C1C1E</Color>
+    <Color x:Key="IpodTextSecondary">#8A8A8F</Color>
+    <Color x:Key="IpodAccentTop">#78B6F2</Color>
+    <Color x:Key="IpodAccentBottom">#1958A8</Color>
+    <Color x:Key="IpodAccentSolid">#1565C9</Color>
+    <Color x:Key="IpodDanger">#D6473F</Color>
+    <Color x:Key="IpodOk">#2FA84A</Color>
+
+    <SolidColorBrush x:Key="IpodBgBrush" Color="{StaticResource IpodBg}" />
+    <SolidColorBrush x:Key="IpodRowBgBrush" Color="{StaticResource IpodRowBg}" />
+    <SolidColorBrush x:Key="IpodBorderBrush" Color="{StaticResource IpodBorder}" />
+    <SolidColorBrush x:Key="IpodTextBrush" Color="{StaticResource IpodText}" />
+    <SolidColorBrush x:Key="IpodTextSecondaryBrush" Color="{StaticResource IpodTextSecondary}" />
+    <SolidColorBrush x:Key="IpodAccentSolidBrush" Color="{StaticResource IpodAccentSolid}" />
+    <SolidColorBrush x:Key="IpodDangerBrush" Color="{StaticResource IpodDanger}" />
+    <SolidColorBrush x:Key="IpodOkBrush" Color="{StaticResource IpodOk}" />
+
+    <!-- El clásico resaltado "vidrio" azul del menú del iPod: más claro
+         arriba, más oscuro abajo. -->
+    <LinearGradientBrush x:Key="IpodAccentGradient" StartPoint="0%,0%" EndPoint="0%,100%">
+      <GradientStop Color="{StaticResource IpodAccentTop}" Offset="0" />
+      <GradientStop Color="{StaticResource IpodAccentBottom}" Offset="1" />
+    </LinearGradientBrush>
+
+    <!-- Barra superior tipo metal cepillado, sutil. -->
+    <LinearGradientBrush x:Key="IpodTopBarGradient" StartPoint="0%,0%" EndPoint="0%,100%">
+      <GradientStop Color="#FAFAFB" Offset="0" />
+      <GradientStop Color="#E2E2E6" Offset="1" />
+    </LinearGradientBrush>
+  </Styles.Resources>
+
+  <!-- ================= ventana ================= -->
+
+  <Style Selector="Window">
+    <Setter Property="Background" Value="{StaticResource IpodBgBrush}" />
+    <Setter Property="FontFamily" Value="Inter" />
+  </Style>
+
+  <!-- ================= barra superior ================= -->
+
+  <Style Selector="Border.ipod-topbar">
+    <Setter Property="Background" Value="{StaticResource IpodTopBarGradient}" />
+    <Setter Property="BorderBrush" Value="{StaticResource IpodBorderBrush}" />
+    <Setter Property="BorderThickness" Value="0,0,0,1" />
+    <Setter Property="Padding" Value="22,16" />
+  </Style>
+
+  <Style Selector="TextBlock.ipod-title">
+    <Setter Property="FontSize" Value="18" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{StaticResource IpodTextBrush}" />
+  </Style>
+
+  <Style Selector="TextBlock.ipod-subtitle">
+    <Setter Property="FontSize" Value="11" />
+    <Setter Property="Foreground" Value="{StaticResource IpodTextSecondaryBrush}" />
+  </Style>
+
+  <!-- Encabezado de sección tipo "SERVIDOR" en el menú de un iPod real. -->
+  <Style Selector="TextBlock.ipod-section">
+    <Setter Property="FontSize" Value="11" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{StaticResource IpodTextSecondaryBrush}" />
+    <Setter Property="LetterSpacing" Value="0.7" />
+    <Setter Property="Margin" Value="2,0,0,6" />
+  </Style>
+
+  <!-- ================= filas de lista ================= -->
+
+  <Style Selector="Border.ipod-row">
+    <Setter Property="Background" Value="{StaticResource IpodRowBgBrush}" />
+    <Setter Property="BorderBrush" Value="{StaticResource IpodBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="10" />
+    <Setter Property="Padding" Value="16,13" />
+  </Style>
+
+  <Style Selector="TextBlock.ipod-row-title">
+    <Setter Property="FontSize" Value="14" />
+    <Setter Property="Foreground" Value="{StaticResource IpodTextBrush}" />
+  </Style>
+
+  <Style Selector="TextBlock.ipod-row-value">
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="Foreground" Value="{StaticResource IpodTextSecondaryBrush}" />
+  </Style>
+
+  <Style Selector="TextBlock.ipod-hint">
+    <Setter Property="FontSize" Value="11" />
+    <Setter Property="Foreground" Value="{StaticResource IpodTextSecondaryBrush}" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+  </Style>
+
+  <!-- ================= botones ================= -->
+
+  <Style Selector="Button.ipod-primary">
+    <Setter Property="Background" Value="{StaticResource IpodAccentGradient}" />
+    <Setter Property="Foreground" Value="White" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="FontSize" Value="14" />
+    <Setter Property="Padding" Value="20,11" />
+    <Setter Property="CornerRadius" Value="9" />
+    <Setter Property="BorderThickness" Value="0" />
+  </Style>
+  <Style Selector="Button.ipod-primary:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Opacity" Value="0.92" />
+  </Style>
+  <Style Selector="Button.ipod-primary:disabled /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Opacity" Value="0.45" />
+  </Style>
+
+  <Style Selector="Button.ipod-secondary">
+    <Setter Property="Background" Value="{StaticResource IpodRowBgBrush}" />
+    <Setter Property="Foreground" Value="{StaticResource IpodTextBrush}" />
+    <Setter Property="BorderBrush" Value="{StaticResource IpodBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="9" />
+    <Setter Property="Padding" Value="20,11" />
+  </Style>
+
+  <!-- Botón chico tipo "chip", para acciones secundarias dentro de una fila
+       (ej. Reescanear). -->
+  <Style Selector="Button.ipod-chip">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{StaticResource IpodAccentSolidBrush}" />
+    <Setter Property="BorderBrush" Value="{StaticResource IpodAccentSolidBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="20" />
+    <Setter Property="Padding" Value="12,5" />
+    <Setter Property="FontSize" Value="11" />
+  </Style>
+
+  <!-- ================= control segmentado (Álbumes/Canciones, Lista/Grilla) ================= -->
+
+  <Style Selector="Button.ipod-segment">
+    <Setter Property="Background" Value="{StaticResource IpodRowBgBrush}" />
+    <Setter Property="Foreground" Value="{StaticResource IpodTextSecondaryBrush}" />
+    <Setter Property="BorderBrush" Value="{StaticResource IpodBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="7" />
+    <Setter Property="Padding" Value="14,7" />
+    <Setter Property="FontSize" Value="12" />
+  </Style>
+  <Style Selector="Button.ipod-segment.active">
+    <Setter Property="Background" Value="{StaticResource IpodAccentGradient}" />
+    <Setter Property="Foreground" Value="White" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+
+  <!-- Tile de la vista en grilla: cuadrado con la carátula arriba y el
+       texto abajo, sin el padding/borde de ipod-row (la carátula ocupa
+       el ancho completo del tile). -->
+  <Style Selector="Border.ipod-tile">
+    <Setter Property="Background" Value="{StaticResource IpodRowBgBrush}" />
+    <Setter Property="BorderBrush" Value="{StaticResource IpodBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="10" />
+    <Setter Property="Padding" Value="0" />
+  </Style>
+
+  <!-- ================= toggles ================= -->
+
+  <!-- El azul ya sale gratis de SystemAccentColor (ver App.axaml). El
+       "On"/"Off" al lado del switch es el default de FluentTheme — se probó
+       sacarlo con OnContent/OffContent en null pero no lo respeta (el
+       ContentPresenter interno no lo toma como override), y de todos modos
+       queda prolijo así, similar a Configuración de Windows 11. -->
+  <Style Selector="ToggleSwitch">
+    <Setter Property="HorizontalAlignment" Value="Left" />
+  </Style>
+
+  <!-- ================= progreso ================= -->
+
+  <Style Selector="ProgressBar.ipod">
+    <Setter Property="Background" Value="{StaticResource IpodBorderBrush}" />
+    <Setter Property="Foreground" Value="{StaticResource IpodAccentSolidBrush}" />
+    <Setter Property="Height" Value="8" />
+    <Setter Property="CornerRadius" Value="4" />
+  </Style>
+
+</Styles>

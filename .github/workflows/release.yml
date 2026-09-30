@@ -1,0 +1,214 @@
+name: Release
+
+# Se dispara con un tag v*.*.* (git tag v0.3.1 && git push --tags), o a mano
+# desde la pestaña Actions de GitHub para volver a generar los binarios de un
+# tag existente sin tener que recrearlo.
+on:
+  push:
+    tags: ['v*.*.*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag a publicar (ej. v0.3.1). Tiene que existir.'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - rid: win-x64
+            label: windows-x64
+          - rid: linux-x64
+            label: linux-x64
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - run: dotnet restore
+
+      # Ver ci.yml: reintentos por una fragilidad conocida de
+      # Avalonia.Headless.XUnit al construir muchas ventanas seguidas en un
+      # mismo proceso (no es un bug de la app; aislado, cada test pasa siempre).
+      - name: Test (con reintentos por una fragilidad conocida de Avalonia.Headless)
+        shell: bash
+        run: |
+          set -o pipefail
+          for i in 1 2 3 4 5 6 7 8; do
+            dotnet test --no-restore -c Release 2>&1 | tee "test-attempt-$i.log" && exit 0
+            echo "Intento $i falló, reintentando..."
+          done
+          exit 1
+
+      - name: Subir logs de test (solo si fallaron todos los intentos)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-logs-${{ matrix.rid }}
+          path: test-attempt-*.log
+
+      # Self-contained: quien lo baja no necesita instalar .NET.
+      # IncludeNativeLibrariesForSelfExtract mete SkiaSharp/HarfBuzzSharp (y
+      # ANGLE en Windows) DENTRO del único archivo -por default quedan
+      # sueltas al lado, porque el bundler de un solo archivo no empaqueta
+      # nativas- y las extrae a un cache por versión en el primer arranque,
+      # no en cada uno. EnableCompressionInSingleFile comprime el runtime de
+      # .NET empaquetado. DebugType=None saca los .pdb (símbolos de debug,
+      # no hacen falta para correr la app).
+      #
+      # PublishTrimmed (v0.3.8) saca del runtime empaquetado lo que la app
+      # nunca usa. Solo se activa con esta flag -el csproj lo deja
+      # condicionado a propósito- para que `dotnet build`/`dotnet test`
+      # normales no paguen el costo de tiempo del trimmer. Riesgoso a
+      # ciegas (el trimmer puede borrar algo a lo que solo se llega por
+      # reflexión), así que va con TrimMode=partial y TagLibSharp fijado
+      # como raíz completa (ver el comentario en el .csproj) — y
+      # PersistenceTests + un `covers` end-to-end contra SFTP real bajo un
+      # publish recortado de verdad verificaron que settings.json y la
+      # extracción de carátulas siguen andando. Medido en este entorno:
+      # ~91 MB -> ~46 MB de la compresión sola, ~46 MB -> ~24 MB con esto
+      # además.
+      - name: Publish ${{ matrix.rid }}
+        run: |
+          dotnet publish IpodSync.Desktop -c Release -r ${{ matrix.rid }} \
+            --self-contained -p:PublishSingleFile=true \
+            -p:EnableCompressionInSingleFile=true \
+            -p:IncludeNativeLibrariesForSelfExtract=true \
+            -p:DebugType=None \
+            -p:PublishTrimmed=true \
+            -o dist/${{ matrix.rid }}
+
+      - name: Empaquetar assets de escritorio de Linux
+        if: matrix.rid == 'linux-x64'
+        run: cp -r packaging/linux dist/${{ matrix.rid }}/packaging-linux
+
+      - name: Zip
+        run: |
+          cd dist/${{ matrix.rid }}
+          zip -r "$GITHUB_WORKSPACE/IpodSync-${{ matrix.label }}.zip" .
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: IpodSync-${{ matrix.label }}
+          path: IpodSync-${{ matrix.label }}.zip
+          if-no-files-found: error
+
+  # Instalador de Windows con Inno Setup: agarra el zip de win-x64 que ya
+  # publicó el job de arriba (no vuelve a compilar la app) y arma un .exe
+  # que instala por usuario, con acceso directo y desinstalador. No es lo
+  # que reduce el peso -eso ya lo hace el publish de arriba-, es la
+  # experiencia normal de "instalar" en vez de "descomprimir una carpeta a
+  # mano". Corre en windows-latest porque ISCC.exe es una herramienta de
+  # Windows; instalarla vía Wine en Linux es más frágil que un runner nativo.
+  installer:
+    needs: build
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: IpodSync-windows-x64
+          path: dist-zip
+
+      - name: Descomprimir el publish de win-x64
+        shell: pwsh
+        run: Expand-Archive -Path dist-zip\IpodSync-windows-x64.zip -DestinationPath dist\win-x64
+
+      - name: Determinar el tag
+        id: tag
+        shell: bash
+        run: |
+          if [ -n "${{ github.event.inputs.tag }}" ]; then
+            echo "tag=${{ github.event.inputs.tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Instalar Inno Setup
+        run: choco install innosetup --no-progress -y
+
+      - name: Compilar el instalador
+        shell: pwsh
+        run: |
+          $version = "${{ steps.tag.outputs.tag }}" -replace '^v',''
+          # Ruta ABSOLUTA para /O: Inno Setup resuelve las rutas relativas
+          # del .iss (Source, SetupIconFile) relativas a la ubicación del
+          # PROPIO script (packaging\windows\), no al directorio de trabajo
+          # desde el que se invoca ISCC.exe. Una /O relativa habría escrito
+          # el instalador en packaging\windows\dist-installer\, no en la
+          # raíz del repo donde lo busca el paso de acá abajo.
+          $outDir = Join-Path $PWD "dist-installer"
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" `
+            "/DMyAppVersion=$version" `
+            "/O$outDir" `
+            packaging\windows\setup.iss
+
+          Get-ChildItem $outDir
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: IpodSync-Setup
+          path: dist-installer\*.exe
+          # Sin esto, "no encontró archivos" es solo un warning y el job
+          # queda en verde igual: así se nos escapó la vez pasada que el
+          # instalador terminó vacío por una ruta relativa mal resuelta.
+          if-no-files-found: error
+
+  release:
+    needs: [build, installer]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # historial completo: --generate-notes necesita el tag anterior
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Determinar el tag
+        id: tag
+        run: |
+          if [ -n "${{ github.event.inputs.tag }}" ]; then
+            echo "tag=${{ github.event.inputs.tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Listar lo que se va a subir
+        run: ls -la artifacts/
+
+      - name: Crear el release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # nullglob: si algún patrón no matchea nada, desaparece de la
+          # lista en vez de pasarle a gh el string literal "artifacts/*.exe"
+          # sin expandir (que gh trataría como un nombre de archivo real,
+          # inexistente, y fallaría). Así se detecta con un mensaje claro
+          # en vez de un "exit code 1" sin contexto.
+          shopt -s nullglob
+          files=(artifacts/*.zip artifacts/*.exe)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "No hay artifacts para subir (esperaba .zip y .exe en artifacts/)." >&2
+            exit 1
+          fi
+
+          gh release create "${{ steps.tag.outputs.tag }}" \
+            "${files[@]}" \
+            --repo "${{ github.repository }}" \
+            --title "IpodSync ${{ steps.tag.outputs.tag }}" \
+            --generate-notes

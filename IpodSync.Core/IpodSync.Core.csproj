@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Cliente SFTP nativo: sin WSL, sin rsync -->
+    <PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" />
+    <PackageReference Include="SSH.NET" Version="2026.0.0" />
+    <!-- DPAPI en Windows para cifrar la password guardada -->
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
+    <!-- CoverExtractor: leer la carátula embebida de un tema (TagLibSharp,
+         ~500KB) y redimensionarla/recodificarla en baseline JPEG (SkiaSharp
+         — ya viaja igual con IpodSync.Desktop vía Avalonia.Skia, así que no
+         suma peso al build de Windows). Ninguna de las dos es una
+         dependencia de UI: no rompe la regla de Core "sin Avalonia". -->
+    <PackageReference Include="TagLibSharp" Version="2.3.0" />
+    <PackageReference Include="SkiaSharp" Version="2.88.9" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,61 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AssemblyName>IpodSync</AssemblyName>
+    <RootNamespace>IpodSync.Desktop</RootNamespace>
+    <Version>0.3.10</Version>
+    <ApplicationIcon>Assets/ipodsync.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <!-- El .exe self-contained pesaba 47 MB, casi todo runtime de .NET que la
+       app no usa. Recortarlo lo baja a ~24 MB. Solo aplica al publish: el
+       build de desarrollo y los tests no se tocan.
+
+       Lo que el trimmer puede romper, y cómo está cubierto:
+       - La serialización de settings/estado iba por reflexión y quedaba
+         guardando JSON vacío. Ahora va por AppJsonContext (generado en
+         compilación), y PersistenceTests lo verifica.
+       - TagLibSharp resuelve el tipo de archivo por reflexión, así que se
+         preserva entero (son ~500 KB). Sin esto, extraer carátulas falla.
+       - Avalonia.DesignerSupport y el transporte Bson del previewer avisan,
+         pero son del diseñador: no corren en la app publicada. -->
+  <PropertyGroup Condition="'$(PublishTrimmed)' == 'true'">
+    <TrimMode>partial</TrimMode>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(PublishTrimmed)' == 'true'">
+    <TrimmerRootAssembly Include="TagLibSharp" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Le permite a IpodSync.Desktop.Tests inyectar un detector falso en
+         App.Devices, para probar el guardia de instancia unica de sync sin
+         depender de que haya un iPod real conectado en la maquina de test. -->
+    <InternalsVisibleTo Include="IpodSync.Desktop.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AvaloniaResource Include="Assets/**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.2.3" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.2.3" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.3" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.2.3" />
+    <PackageReference Include="Avalonia.Diagnostics" Version="11.2.3"
+                      Condition="'$(Configuration)' == 'Debug'" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\IpodSync.Core\IpodSync.Core.csproj" />
+  </ItemGroup>
+
+</Project>

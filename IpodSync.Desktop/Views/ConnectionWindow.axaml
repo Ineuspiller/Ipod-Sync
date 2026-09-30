@@ -1,0 +1,117 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="IpodSync.Desktop.Views.ConnectionWindow"
+        x:Name="Root"
+        Title="iPod Sync"
+        Width="540" Height="700"
+        WindowStartupLocation="CenterScreen"
+        CanResize="False">
+
+    <DockPanel>
+
+        <Border DockPanel.Dock="Top" Classes="ipod-topbar">
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Grid.Column="0" Spacing="2">
+                    <TextBlock x:Name="HeadingText" Classes="ipod-title" />
+                    <TextBlock x:Name="SubtitleText" Classes="ipod-subtitle" TextWrapping="Wrap" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Top">
+                    <TextBlock x:Name="LanguageLabel" Classes="ipod-section"
+                               HorizontalAlignment="Right" Margin="0" />
+                    <ComboBox x:Name="LanguageBox" SelectionChanged="OnLanguageChanged"
+                              HorizontalAlignment="Right">
+                        <ComboBoxItem Content="Español" />
+                        <ComboBoxItem Content="English" />
+                    </ComboBox>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Grid DockPanel.Dock="Bottom" ColumnDefinitions="Auto,*,Auto" Margin="24,4,24,20">
+            <Button Grid.Column="0" x:Name="TestButton" Classes="ipod-secondary" Click="OnTestConnection" />
+            <Button Grid.Column="2" x:Name="SaveButton" Classes="ipod-primary"
+                    Click="OnSave" IsEnabled="False" />
+        </Grid>
+
+        <ScrollViewer>
+            <StackPanel Margin="24,20,24,4" Spacing="18">
+
+                <!-- Servidor -->
+                <StackPanel Spacing="8">
+                    <TextBlock x:Name="ServerSectionText" Classes="ipod-section" />
+                    <Border Classes="ipod-row">
+                        <StackPanel Spacing="12">
+                            <Grid ColumnDefinitions="*,12,90">
+                                <StackPanel Grid.Column="0" Spacing="4">
+                                    <TextBlock x:Name="HostLabel" Classes="ipod-row-value" />
+                                    <TextBox x:Name="HostBox" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Spacing="4">
+                                    <TextBlock x:Name="PortLabel" Classes="ipod-row-value" />
+                                    <TextBox x:Name="PortBox" Text="22" />
+                                </StackPanel>
+                            </Grid>
+
+                            <StackPanel Spacing="4">
+                                <TextBlock x:Name="UserLabel" Classes="ipod-row-value" />
+                                <TextBox x:Name="UserBox" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- Autenticación -->
+                <StackPanel Spacing="8">
+                    <TextBlock x:Name="AuthSectionText" Classes="ipod-section" />
+                    <Border Classes="ipod-row">
+                        <StackPanel Spacing="12">
+                            <StackPanel Orientation="Horizontal" Spacing="20">
+                                <RadioButton x:Name="PasswordRadio" GroupName="Auth"
+                                             IsChecked="True"
+                                             Checked="OnAuthModeChanged" />
+                                <RadioButton x:Name="KeyRadio" GroupName="Auth"
+                                             Checked="OnAuthModeChanged" />
+                            </StackPanel>
+
+                            <StackPanel x:Name="PasswordPanel" Spacing="4">
+                                <TextBlock x:Name="PasswordLabel" Classes="ipod-row-value" />
+                                <TextBox x:Name="PasswordBox" PasswordChar="●" />
+                                <TextBlock x:Name="PasswordHintText" Classes="ipod-hint" />
+                            </StackPanel>
+
+                            <StackPanel x:Name="KeyPanel" Spacing="4" IsVisible="False">
+                                <TextBlock x:Name="KeyFileLabel" Classes="ipod-row-value" />
+                                <Grid ColumnDefinitions="*,8,Auto">
+                                    <TextBox Grid.Column="0" x:Name="KeyPathBox"
+                                             Watermark="C:\Users\...\.ssh\id_ed25519" />
+                                    <Button Grid.Column="2" x:Name="BrowseButton"
+                                            Classes="ipod-secondary" Click="OnBrowseKey" />
+                                </Grid>
+                                <TextBlock x:Name="PassphraseLabel" Classes="ipod-row-value" Margin="0,6,0,0" />
+                                <TextBox x:Name="PassphraseBox" PasswordChar="●" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- Biblioteca -->
+                <StackPanel Spacing="8">
+                    <TextBlock x:Name="LibrarySectionText" Classes="ipod-section" />
+                    <Border Classes="ipod-row">
+                        <StackPanel Spacing="4">
+                            <TextBlock x:Name="LibraryLabel" Classes="ipod-row-value" />
+                            <TextBox x:Name="RemotePathBox" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- Resultado de la prueba -->
+                <Border x:Name="StatusBorder" Classes="ipod-row" IsVisible="False">
+                    <TextBlock x:Name="StatusText" TextWrapping="Wrap" Classes="ipod-row-title" />
+                </Border>
+
+            </StackPanel>
+        </ScrollViewer>
+
+    </DockPanel>
+</Window>

@@ -1,0 +1,257 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="IpodSync.Desktop.Views.MainWindow"
+        Title="iPod Sync"
+        Icon="/Assets/ipodsync.ico"
+        Width="640" Height="560"
+        MinWidth="480" MinHeight="420"
+        WindowStartupLocation="CenterScreen">
+
+    <!-- Los tres paneles se superponen en la misma celda; solo uno está
+         visible a la vez (ver MainWindow.axaml.cs, Show*Panel). Un solo
+         Window para toda la app: nada de abrir una ventana nueva por cada
+         paso, todo cambia en la misma.
+
+         El look (paleta, filas de lista, botón principal en degradé azul)
+         está en Styles/IpodTheme.axaml e imita el menú del iPod Classic
+         real: fondo claro, filas con separador fino, resaltado azul tipo
+         vidrio para la acción principal. -->
+    <Grid>
+
+        <!-- ================= Panel principal: estado + acciones ================= -->
+        <DockPanel x:Name="MainPanel">
+
+            <Border DockPanel.Dock="Top" Classes="ipod-topbar">
+                <StackPanel Spacing="2">
+                    <TextBlock Text="iPod Sync" Classes="ipod-title" />
+                    <TextBlock x:Name="ServerLabel" Classes="ipod-subtitle" />
+                </StackPanel>
+            </Border>
+
+            <Grid DockPanel.Dock="Bottom" ColumnDefinitions="Auto,*,Auto" Margin="22,4,22,20">
+                <Button Grid.Column="0" x:Name="SettingsButton"
+                        Classes="ipod-secondary" Click="OnOpenSettings" />
+                <Button Grid.Column="2" x:Name="SyncButton"
+                        Classes="ipod-primary" Click="OnSync" IsEnabled="False" />
+            </Grid>
+
+            <ScrollViewer>
+                <StackPanel Spacing="20" Margin="22,20,22,4">
+
+                    <StackPanel Spacing="8">
+                        <TextBlock x:Name="ServerSectionText" Classes="ipod-section" />
+                        <Border Classes="ipod-row">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Grid.Column="0" x:Name="ServerStatus"
+                                           Classes="ipod-row-title" TextWrapping="Wrap"
+                                           VerticalAlignment="Center" />
+                                <Button Grid.Column="1" x:Name="RescanButton"
+                                        Classes="ipod-chip" Click="OnRescanServer"
+                                        VerticalAlignment="Top" Margin="12,0,0,0" />
+                            </Grid>
+                        </Border>
+                    </StackPanel>
+
+                    <StackPanel Spacing="8">
+                        <TextBlock x:Name="IpodSectionText" Classes="ipod-section" />
+                        <Border Classes="ipod-row">
+                            <StackPanel Spacing="4">
+                                <TextBlock x:Name="IpodStatus" Classes="ipod-row-title" TextWrapping="Wrap" />
+                                <TextBlock x:Name="IpodDetail" Classes="ipod-row-value" TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Fila navegable, como un ítem de menú del iPod real:
+                             lleva a LibraryPanel en vez de abrir una ventana. -->
+                        <Button x:Name="LibraryButton" Click="OnOpenLibrary"
+                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                Background="Transparent" BorderThickness="0" Padding="0"
+                                IsEnabled="False">
+                            <Border Classes="ipod-row">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <StackPanel Grid.Column="0" Spacing="2">
+                                        <TextBlock x:Name="LibraryButtonText" Classes="ipod-row-title" />
+                                        <TextBlock x:Name="LibraryButtonHint" Classes="ipod-row-value" />
+                                    </StackPanel>
+                                    <TextBlock Grid.Column="1" Text="›" FontSize="18"
+                                               Foreground="{StaticResource IpodTextSecondaryBrush}"
+                                               VerticalAlignment="Center" />
+                                </Grid>
+                            </Border>
+                        </Button>
+                    </StackPanel>
+
+                    <TextBlock x:Name="DiskModeHintText" Classes="ipod-hint" Margin="2,0" />
+
+                </StackPanel>
+            </ScrollViewer>
+
+        </DockPanel>
+
+        <!-- ================= Panel de Settings ================= -->
+        <!-- ScrollViewer siempre presente: si el contenido no entra a algún
+             tamaño de fuente/DPI que no se pudo probar acá, se puede
+             scrollear en vez de que el botón de cerrar quede tapado. -->
+        <ScrollViewer x:Name="SettingsPanel" IsVisible="False">
+            <StackPanel Spacing="0">
+
+                <Border Classes="ipod-topbar">
+                    <TextBlock x:Name="SettingsHeadingText" Classes="ipod-title" />
+                </Border>
+
+                <StackPanel Margin="22,20" Spacing="14">
+
+                    <Border Classes="ipod-row">
+                        <StackPanel Spacing="4">
+                            <ToggleSwitch x:Name="AutoSyncCheck" IsCheckedChanged="OnAutoSyncChanged" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Classes="ipod-row">
+                        <StackPanel Spacing="4">
+                            <ToggleSwitch x:Name="StartupCheck" IsCheckedChanged="OnStartupChanged" />
+                            <TextBlock x:Name="StartupDetail" Classes="ipod-hint" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Classes="ipod-row">
+                        <StackPanel Spacing="4">
+                            <ToggleSwitch x:Name="SkipConfirmCheck" IsCheckedChanged="OnSkipConfirmChanged" />
+                            <TextBlock x:Name="SkipConfirmHint" Classes="ipod-hint" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Classes="ipod-row">
+                        <StackPanel Spacing="4">
+                            <ToggleSwitch x:Name="DeleteCheck" IsCheckedChanged="OnDeleteChanged" />
+                            <TextBlock x:Name="DeleteDetail" Classes="ipod-hint" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Classes="ipod-row">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Grid.Column="0" x:Name="LanguageLabel"
+                                       Classes="ipod-row-title" VerticalAlignment="Center" />
+                            <ComboBox Grid.Column="1" x:Name="LanguageBox" SelectionChanged="OnLanguageChanged"
+                                      MinWidth="130">
+                                <ComboBoxItem Content="Español" />
+                                <ComboBoxItem Content="English" />
+                            </ComboBox>
+                        </Grid>
+                    </Border>
+
+                    <Button x:Name="EditConnectionButton" Click="OnEditConnection"
+                            Classes="ipod-secondary"
+                            HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
+
+                    <Grid ColumnDefinitions="*,Auto" Margin="0,10,0,4">
+                        <Button Grid.Column="1" x:Name="SettingsCloseButton" Click="OnSettingsClose"
+                                Classes="ipod-primary" />
+                    </Grid>
+
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- ================= Panel de biblioteca ================= -->
+        <!-- Solo lectura de lo que YA está en el iPod — no
+             toca el servidor. Los ítems se arman a mano en el code-behind
+             (LibraryItemsHost.Content), no con ItemsControl+bindings —
+             consistente con el resto de la app, que no usa MVVM. -->
+        <DockPanel x:Name="LibraryPanel" IsVisible="False">
+
+            <Border DockPanel.Dock="Top" Classes="ipod-topbar">
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Grid.Column="0" x:Name="LibraryTitleText"
+                               Classes="ipod-title" VerticalAlignment="Center" />
+                    <Button Grid.Column="1" x:Name="LibraryCloseButton"
+                            Classes="ipod-secondary" Click="OnLibraryClose" />
+                </Grid>
+            </Border>
+
+            <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="22,16,22,0">
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="18">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <Button x:Name="LibraryAlbumsModeButton" Classes="ipod-segment active"
+                                Click="OnLibraryAlbumsMode" />
+                        <Button x:Name="LibrarySongsModeButton" Classes="ipod-segment"
+                                Click="OnLibrarySongsMode" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <Button x:Name="LibraryGridLayoutButton" Classes="ipod-segment active"
+                                Click="OnLibraryGridLayout" />
+                        <Button x:Name="LibraryListLayoutButton" Classes="ipod-segment"
+                                Click="OnLibraryListLayout" />
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Rockbox no lee la carátula embebida de los temas:
+                     esto la extrae y la deja como cover.jpg
+                     suelto para los álbumes que se ven sin imagen. También
+                     corre solo después de cada sync; este botón es para
+                     pedirlo de nuevo sin sincronizar (ej. justo después de
+                     conectar el iPod, con una biblioteca vieja). -->
+                <Button Grid.Column="1" x:Name="LibraryFixCoversButton" Classes="ipod-chip"
+                        Click="OnLibraryFixCovers" />
+            </Grid>
+
+            <TextBlock DockPanel.Dock="Top" x:Name="LibraryFixCoversStatus" Classes="ipod-hint"
+                       Margin="22,8,22,0" IsVisible="False" />
+
+            <Button DockPanel.Dock="Top" x:Name="LibraryBackButton" Classes="ipod-chip"
+                    Click="OnLibraryBack" HorizontalAlignment="Left"
+                    Margin="22,14,0,0" IsVisible="False" />
+
+            <TextBlock DockPanel.Dock="Top" x:Name="LibraryEmptyText" Classes="ipod-hint"
+                       Margin="22,20,22,0" TextWrapping="Wrap" IsVisible="False" />
+
+            <ScrollViewer>
+                <ContentControl x:Name="LibraryItemsHost" Margin="22,16,22,20" />
+            </ScrollViewer>
+
+        </DockPanel>
+
+        <!-- ================= Panel de sincronización ================= -->
+        <DockPanel x:Name="SyncPanel" IsVisible="False">
+
+            <Border DockPanel.Dock="Top" Classes="ipod-topbar">
+                <StackPanel Spacing="2">
+                    <TextBlock x:Name="PhaseTitle" Classes="ipod-title" />
+                    <TextBlock x:Name="PhaseDetail" Classes="ipod-subtitle" TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+
+            <Grid DockPanel.Dock="Bottom" ColumnDefinitions="Auto,*,Auto" Margin="22,4,22,20">
+                <Button Grid.Column="0" x:Name="SyncSecondaryButton"
+                        Classes="ipod-secondary" Click="OnSyncSecondary" />
+                <Button Grid.Column="2" x:Name="SyncPrimaryButton"
+                        Classes="ipod-primary" Click="OnSyncPrimary" IsEnabled="False" />
+            </Grid>
+
+            <Grid RowDefinitions="Auto,*" Margin="22,20,22,4">
+
+                <StackPanel Grid.Row="0" Spacing="8" Margin="0,0,0,16">
+                    <ProgressBar x:Name="Bar" Classes="ipod"
+                                 IsIndeterminate="True" Minimum="0" Maximum="100" />
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Grid.Column="0" x:Name="CurrentFile" Classes="ipod-row-value"
+                                   TextTrimming="CharacterEllipsis" />
+                        <TextBlock Grid.Column="1" x:Name="Counter" Classes="ipod-row-value"
+                                   Margin="12,0,0,0" />
+                    </Grid>
+                </StackPanel>
+
+                <Border Grid.Row="1" Classes="ipod-row" Padding="0">
+                    <ScrollViewer x:Name="LogScroll" Margin="16,13">
+                        <SelectableTextBlock x:Name="Log" FontSize="12" FontFamily="Consolas,Menlo,monospace"
+                                             Foreground="{StaticResource IpodTextBrush}"
+                                             TextWrapping="Wrap" LineHeight="18" />
+                    </ScrollViewer>
+                </Border>
+
+            </Grid>
+
+        </DockPanel>
+
+    </Grid>
+</Window>

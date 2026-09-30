@@ -1,0 +1,41 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="IpodSync.Desktop.App"
+             RequestedThemeVariant="Light">
+
+    <!-- SystemAccentColor es el color que FluentTheme usa para todo lo que
+         indica "seleccionado"/"activo" en sus controles de fábrica
+         (ToggleSwitch, CheckBox, etc.): ponerlo acá alcanza para que esos
+         controles usen el azul del iPod sin tener que reescribirles la
+         plantilla. IpodTheme.axaml define el resto (filas de lista, barra
+         superior, botones) como clases sobre los controles de FluentTheme. -->
+    <Application.Resources>
+        <Color x:Key="SystemAccentColor">#1565C9</Color>
+    </Application.Resources>
+
+    <Application.Styles>
+        <FluentTheme />
+        <StyleInclude Source="avares://IpodSync/Styles/IpodTheme.axaml" />
+    </Application.Styles>
+
+    <TrayIcon.Icons>
+        <TrayIcons>
+            <TrayIcon Icon="/Assets/ipodsync.ico"
+                      ToolTipText="iPod Sync"
+                      Clicked="OnTrayClicked">
+                <TrayIcon.Menu>
+                    <NativeMenu>
+                        <!-- NativeMenuItem no genera campo con x:Name (limitación
+                             del compilador de Avalonia para este árbol); se accede
+                             por índice desde App.axaml.cs vía Tray.Menu.Items. -->
+                        <NativeMenuItem Click="OnTrayOpen" />
+                        <NativeMenuItem Click="OnTraySync" />
+                        <NativeMenuItemSeparator />
+                        <NativeMenuItem Click="OnTrayExit" />
+                    </NativeMenu>
+                </TrayIcon.Menu>
+            </TrayIcon>
+        </TrayIcons>
+    </TrayIcon.Icons>
+
+</Application>

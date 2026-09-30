@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=IpodSync
+Comment=Sincroniza la biblioteca de Navidrome con el iPod
+Exec=IpodSync
+Icon=ipodsync
+Terminal=false
+Categories=AudioVideo;Audio;
+StartupWMClass=IpodSync

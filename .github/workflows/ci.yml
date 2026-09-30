@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - run: dotnet restore
+
+      - run: dotnet build --no-restore -c Release
+
+      # Los tests no necesitan servidor ni iPod: el test de integración
+      # de sincronización real es opt-in por variables de entorno que acá no
+      # están, así que se salta solo sin fallar el build.
+      #
+      # Reintentos: Avalonia.Headless.XUnit, al construir muchas ventanas
+      # seguidas en un mismo proceso, deja intermitentemente sin resolver
+      # 'IFontManagerImpl' en alguna de ellas (~1 de cada 3 corridas
+      # completas en pruebas locales). No es un bug de la app -aislado, cada
+      # test pasa siempre-, sino de cómo el harness comparte estado entre
+      # tests headless consecutivos. Con 5 intentos ya vimos caer las 5 en un
+      # run real (evento de ~1 en 400, pero pasó); 8 intentos baja eso a
+      # ~1 en 15000.
+      - name: Test (con reintentos por una fragilidad conocida de Avalonia.Headless)
+        shell: bash
+        run: |
+          # pipefail: sin esto, "dotnet test | tee archivo" siempre da exit 0
+          # (el de tee), y el retry nunca detectaría un intento fallido.
+          set -o pipefail
+          for i in 1 2 3 4 5 6 7 8; do
+            dotnet test --no-build -c Release --verbosity normal 2>&1 | tee "test-attempt-$i.log" && exit 0
+            echo "Intento $i falló, reintentando..."
+          done
+          exit 1
+
+      # Si los 8 intentos fallaron, queda el log de cada uno para diagnosticar
+      # sin depender de una captura de pantalla de la UI de Actions.
+      - name: Subir logs de test (solo si fallaron todos los intentos)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-logs-${{ matrix.os }}
+          path: test-attempt-*.log
