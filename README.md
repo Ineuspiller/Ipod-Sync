@@ -4,8 +4,6 @@
 
 **Sync your Navidrome music library to an iPod Classic running Rockbox, over SSH/SFTP.**
 
-No WSL, no rsync script, no manual file copying. Plug in the iPod, hit Sync.
-
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-blue)](#installation)
 [![.NET](https://img.shields.io/badge/.NET-8.0-512BD4)](https://dotnet.microsoft.com/download/dotnet/8.0)
 [![Tests](https://img.shields.io/badge/tests-154%20passing-brightgreen)](#running-the-tests)
@@ -46,10 +44,6 @@ IpodSync keeps an iPod Classic running [Rockbox](https://www.rockbox.org/) in sy
 music library served by [Navidrome](https://www.navidrome.org/) (or any folder of audio
 files reachable over SSH). It only copies what changed, rebuilds your playlists in the
 format Rockbox understands, and extracts album art so Rockbox can actually display it.
-
-It replaces an older PowerShell + WSL + rsync setup with a single self-contained desktop
-app for **Windows** and **Linux**, available in **English and Spanish** (switchable live
-from within the app).
 
 ## Features
 
